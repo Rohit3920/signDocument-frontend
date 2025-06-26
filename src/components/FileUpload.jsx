@@ -1,27 +1,26 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import axios from 'axios'; // Make sure axios is installed: npm install axios
+import axios from 'axios';
+// import {useNavigate} from 'react-router-dom'
 
-// client/src/components/FileUpload.js
-// This component handles the PDF upload functionality using Axios
 function FileUpload() {
     const [selectedFile, setSelectedFile] = useState(null);
     const [message, setMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [document, setDocument] = useState()
+    // const navigate = useNavigate();
 
-    // Handler for when a file is selected
     const handleFileChange = (event) => {
         const file = event.target.files[0];
         if (file && file.type === 'application/pdf') {
             setSelectedFile(file);
-            setMessage(''); // Clear previous messages
+            setMessage('');
         } else {
             setSelectedFile(null);
             setMessage('Please select a valid PDF file.');
         }
     };
 
-    // Handler for initiating the file upload
     const handleFileUpload = async () => {
         if (!selectedFile) {
             setMessage('No file selected for upload.');
@@ -32,33 +31,27 @@ function FileUpload() {
         setMessage('Uploading file...');
 
         const formData = new FormData();
-        // CRITICAL FIX: The server (uploadMiddleware.js) expects the file field to be 'pdfDocument'.
-        // Ensure this matches exactly.
         formData.append('pdfDocument', selectedFile);
 
         try {
-            // The endpoint should match your server's documentRoutes.js
             const response = await axios.post('http://localhost:5000/api/docs/upload', formData, {
                 headers: {
-                    // Axios automatically sets 'Content-Type': 'multipart/form-data' with FormData,
-                    // but explicitly setting it doesn't hurt.
                     'Content-Type': 'multipart/form-data',
                 },
             });
 
-            // Update message based on server response
+            setDocument(response.data.document)
             setMessage(response.data.message || 'Upload successful!');
-            setSelectedFile(null); // Clear selected file after successful upload
+            setSelectedFile(null);
         } catch (error) {
             console.error('Error uploading file:', error);
-            // Display error message from backend or a generic one
             if (error.response && error.response.data && error.response.data.message) {
                 setMessage(`Upload failed: ${error.response.data.message}`);
             } else {
                 setMessage('File upload failed! Please try again. Network error or server not reachable.');
             }
         } finally {
-            setIsLoading(false); // Set loading to false regardless of success or failure
+            setIsLoading(false);
         }
     };
 
@@ -66,7 +59,6 @@ function FileUpload() {
         <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-md max-w-md mx-auto">
             <h3 className="text-2xl font-semibold text-gray-700 mb-4">Upload Document</h3>
 
-            {/* File input */}
             <div className="w-full mb-4">
                 <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 mb-2">
                     Select PDF File:
@@ -80,7 +72,6 @@ function FileUpload() {
                 />
             </div>
 
-            {/* Display selected file info */}
             {selectedFile && (
                 <div className="w-full bg-gray-50 p-3 rounded-md border border-gray-200 mb-4">
                     <p className="text-sm text-gray-600">
@@ -89,7 +80,6 @@ function FileUpload() {
                 </div>
             )}
 
-            {/* Upload button */}
             <button
                 onClick={handleFileUpload}
                 disabled={isLoading || !selectedFile}
@@ -102,7 +92,6 @@ function FileUpload() {
                 {isLoading ? 'Uploading...' : 'Upload PDF'}
             </button>
 
-            {/* Message display */}
             {message && (
                 <p className={`mt-4 text-center text-sm font-medium ${message.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
                     {message}
@@ -112,4 +101,4 @@ function FileUpload() {
     );
 }
 
-export default FileUpload
+export default FileUpload;
